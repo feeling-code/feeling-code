@@ -1,1 +1,125 @@
-金鳞岂是池中物，一遇风云便化龙。
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	<!-- 金鳞岂是池中物，一遇风云便化龙。 -->
+	<script>
+		(function(window){
+	function Bufan(){
+
+	}
+	
+	Bufan.prototype = {
+		//目前只能处理ID
+		getDom:function(sele){
+			return document.getElementById(sele);
+		},
+		on:function(sele,type,fn){
+			//获取dom对象
+			var ele = this.getDom(sele);
+			// 点击事件要能兼容ie8
+			//  区分ie8
+			if(ele.addEventListener){
+				// false 是冒泡执行 为了和ie保持统一
+				ele.addEventListener(type, fn, false);
+			}else{
+				ele.attachEvent('on'+type, fn);
+			}
+		},
+		removeEvent:function(sele,type,fn){
+			var ele = this.getDom(sele);
+			if(ele.removeEventListener){
+				ele.removeEventListener(type, fn, false);
+			}else{
+				ele.detachEvent('on'+type, fn);
+			}
+		},
+		hoverIn:function(sele,fn){
+			this.on(sele,'mouseenter',fn);
+		},
+		hoverOut:function(sele,fn){
+			this.on(sele,'mouseout',fn);
+		},
+		hover:function(sele,fnIn,fnOut){
+			// 当hover的时候 同时为元素绑定两个事件
+			this.hoverIn(sele,fnIn);
+			this.hoverOut(sele,fnOut);
+		},
+		getEvent:function(e){
+			return e||window.event;
+		},
+		stopPropagation:function(e){
+			// 标准： event.stopPropagation();
+			// IE： event.cancelBubble = true;
+			var event = this.getEvent(e);
+			if(event.stopPropagation){
+				event.stopPropagation();
+			}else{
+				event.cancelBubble = true;
+			}
+		},
+		preventDefault:function(e){
+			var event = this.getEvent(e);
+			// 标准：e.preventDefault(); 
+			// IE: window.event.returnValue = false;
+			if(event.preventDefault){
+				event.preventDefault(); 
+			}else{
+				window.event.returnValue = false;
+			}
+		},
+		//实现一个事件的委托  
+		//current被点击  触发target的 type类型的事件  用fn处理
+		delegate:function(current,target,type,fn){
+			var that = this;
+			//委托的实现 需要借助 event.target
+			//当前触发的是 current的type事件
+			// 把当前事件传递给 目标对象
+			this.on(current,type,function(e){
+				//为什么不行？
+				// that.stopPropagation(e);
+				//这里吧fn绑定到 真正的目标对象上面
+				var eventTarget = that.getEventTarget(e);
+				//因为代理方法只指定了  target,所以需要过滤标签
+				if(target == eventTarget.tagName.toLowerCase()){
+					//给目标元素添加type事件
+					eventTarget['on'+type] =  function(e){
+						//这里执行fn  把fn的this指向触发事件的真正目标
+						fn.call(this);
+						//阻止冒泡 防止外层current也发生点击事件
+						that.stopPropagation(e);
+					};
+					//执行
+					eventTarget[type]();
+				}
+				
+			});
+		},
+		//通过event获取目标对象
+		getEventTarget:function(e){
+				// IE下,event对象有srcElement属性,但是没有target属性;
+				// Firefox下,event对象有target属性,但是没有srcElement属性
+			var event = this.getEvent(e);
+			return  event.srcElement?event.srcElement:event.target;
+		}
+	}
+	
+	// 如果再追加的话 会把之前的原型全部覆盖掉
+	Bufan.prototype = {
+		animate:function(){
+
+		},
+		move:function(){
+
+		}
+	}
+
+	window.bf = new Bufan();
+
+})(window);
+	</script>
+</body>
+</html>
